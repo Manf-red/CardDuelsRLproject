@@ -1,0 +1,11 @@
+# Specific directories to exclude
+test/
+.venv/
+
+# Jupyter and Python caches
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store

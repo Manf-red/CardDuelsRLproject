@@ -1,0 +1,48 @@
+[
+  { "id": "01", "name": "Scout", "cost": 1, "atk": 2, "def": 1, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "02", "name": "Militia", "cost": 1, "atk": 1, "def": 2, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "03", "name": "Footman", "cost": 2, "atk": 3, "def": 2, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "04", "name": "Squire", "cost": 2, "atk": 2, "def": 3, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "05", "name": "Knight", "cost": 3, "atk": 4, "def": 4, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "06", "name": "Heavy Cavalry", "cost": 4, "atk": 5, "def": 5, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "07", "name": "Berserker", "cost": 4, "atk": 7, "def": 2, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "08", "name": "Golem", "cost": 5, "atk": 5, "def": 7, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "09", "name": "Dragon", "cost": 7, "atk": 8, "def": 8, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "10", "name": "Colossus", "cost": 9, "atk": 10, "def": 10, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+
+  { "id": "11", "name": "Wooden Barricade", "cost": 2, "atk": 0, "def": 6, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "12", "name": "Shield Wall", "cost": 4, "atk": 1, "def": 9, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "13", "name": "Fortress Gate", "cost": 6, "atk": 2, "def": 12, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "14", "name": "Glass Cannon", "cost": 3, "atk": 6, "def": 1, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "15", "name": "Assassin", "cost": 5, "atk": 9, "def": 2, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+
+  { "id": "16", "name": "Arcane Intellect", "cost": 3, "atk": 0, "def": 0, "m_draw": 2, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "17", "name": "Merchant", "cost": 2, "atk": 1, "def": 1, "m_draw": 1, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "18", "name": "Wisdom Potion", "cost": 5, "atk": 0, "def": 0, "m_draw": 3, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+  { "id": "19", "name": "Loremaster", "cost": 6, "atk": 3, "def": 4, "m_draw": 2, "m_burn": 0, "m_heal": 0, "m_wipe": 0 },
+
+  { "id": "20", "name": "Firebolt", "cost": 1, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 2, "m_heal": 0, "m_wipe": 0 },
+  { "id": "21", "name": "Lightning Strike", "cost": 3, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 5, "m_heal": 0, "m_wipe": 0 },
+  { "id": "22", "name": "Lava Burst", "cost": 5, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 8, "m_heal": 0, "m_wipe": 0 },
+  { "id": "23", "name": "Meteor", "cost": 8, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 14, "m_heal": 0, "m_wipe": 0 },
+  { "id": "24", "name": "Pyromancer", "cost": 4, "atk": 3, "def": 2, "m_draw": 0, "m_burn": 3, "m_heal": 0, "m_wipe": 0 },
+
+  { "id": "25", "name": "Minor Heal", "cost": 1, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 0, "m_heal": 3, "m_wipe": 0 },
+  { "id": "26", "name": "Healing Wave", "cost": 4, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 0, "m_heal": 10, "m_wipe": 0 },
+  { "id": "27", "name": "Cleric", "cost": 3, "atk": 1, "def": 3, "m_draw": 0, "m_burn": 0, "m_heal": 4, "m_wipe": 0 },
+  { "id": "28", "name": "Paladin", "cost": 6, "atk": 4, "def": 6, "m_draw": 0, "m_burn": 0, "m_heal": 6, "m_wipe": 0 },
+
+  { "id": "29", "name": "Earthquake", "cost": 7, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 3 },
+  { "id": "30", "name": "Apocalypse", "cost": 10, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 7 },
+  { "id": "31", "name": "Doom Herald", "cost": 9, "atk": 6, "def": 6, "m_draw": 0, "m_burn": 0, "m_heal": 0, "m_wipe": 2 },
+
+  { "id": "32", "name": "Vampiric Drain", "cost": 4, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 3, "m_heal": 3, "m_wipe": 0 },
+  { "id": "33", "name": "Soul Tap", "cost": 1, "atk": 0, "def": 0, "m_draw": 2, "m_burn": 0, "m_heal": -2, "m_wipe": 0 },
+  { "id": "34", "name": "Blood Mage", "cost": 5, "atk": 3, "def": 3, "m_draw": 1, "m_burn": 2, "m_heal": 0, "m_wipe": 0 },
+  { "id": "35", "name": "Holy Smite", "cost": 3, "atk": 0, "def": 0, "m_draw": 0, "m_burn": 3, "m_heal": 3, "m_wipe": 0 },
+  { "id": "36", "name": "Battle Priest", "cost": 5, "atk": 4, "def": 3, "m_draw": 1, "m_burn": 0, "m_heal": 3, "m_wipe": 0 },
+  { "id": "37", "name": "Cursed Blade", "cost": 4, "atk": 8, "def": 2, "m_draw": 0, "m_burn": 0, "m_heal": -4, "m_wipe": 0 },
+  { "id": "38", "name": "Life Weaver", "cost": 8, "atk": 3, "def": 8, "m_draw": 2, "m_burn": 0, "m_heal": 6, "m_wipe": 0 },
+  { "id": "39", "name": "Reckless Giant", "cost": 6, "atk": 9, "def": 6, "m_draw": 0, "m_burn": -4, "m_heal": 0, "m_wipe": 0 },
+  { "id": "40", "name": "Absolute Zero", "cost": 10, "atk": 0, "def": 0, "m_draw": 2, "m_burn": 5, "m_heal": 5, "m_wipe": 2 }
+]
