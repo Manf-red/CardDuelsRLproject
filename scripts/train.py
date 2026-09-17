@@ -7,7 +7,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-from agents import heuristic_agent
 from agents.dqn_agent import DQNAgent
 from agents.heuristic_agent import HeuristicOpponent
 from env.environment import CardDuelsEnv
@@ -274,10 +273,10 @@ def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_age
 
         if episode % log_every == 0:
             # Evaluate against the STATIC Heuristic, not itself
-            cached_temp = heuristic_agent.temperature
-            heuristic_agent.temperature = 0.01
+            cached_temp = evaluation_benchmark_agent.temperature
+            evaluation_benchmark_agent.temperature = 0.01
             mean_ret, std_ret, eval_win_rate = evaluate_agent(agent, env, evaluation_benchmark_agent, n_episodes=20, seed=seed)
-            heuristic_agent.temperature = cached_temp
+            evaluation_benchmark_agent.temperature = cached_temp
             
             history.eval_episodes.append(episode)
             history.eval_p0_win_rates.append(eval_win_rate)

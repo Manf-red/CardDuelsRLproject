@@ -1,6 +1,7 @@
 # Specific directories to exclude
-test/
+tests/
 .venv/
+checkpoints/
 
 # Jupyter and Python caches
 .ipynb_checkpoints/
