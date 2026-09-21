@@ -80,7 +80,7 @@ class DQNAgent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize the Multi-branch fusion network
-        self.q_net = MultiModalQNetwork(observation_space, self.n_actions, card_extractor_cls=card_extractor_cls, card_extractor_out_dim=64).to(self.device)
+        self.q_net = MultiModalQNetwork(observation_space, self.n_actions, card_extractor_out_dim=64).to(self.device)
         self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=lr_start)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=total_episodes, eta_min=lr_min)
 

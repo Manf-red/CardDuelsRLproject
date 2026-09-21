@@ -1,4 +1,4 @@
-import random
+import numpy as np
 
 from env.cards import Card, Deck
 
@@ -53,9 +53,10 @@ class GameState:
     """
     The core rules engine for the Turn and the Combat resolution mechanic.
     """
-    def __init__(self, p1: Player, p2: Player):
+    def __init__(self, p1: Player, p2: Player, rng: np.random.Generator):
         self.players = [p1, p2]
         self.active_p_idx = 0
+        self.rng = rng
 
     def get_active_player(self) -> Player:
         return self.players[self.active_p_idx]
@@ -141,7 +142,7 @@ class GameState:
             if card.m_wipe > 0:
                 num_to_destroy = min(card.m_wipe, len(defender.board))
                 if num_to_destroy > 0:
-                    indices_to_destroy = sorted(random.sample(range(len(defender.board)), num_to_destroy), reverse=True)
+                    indices_to_destroy = sorted(self.rng.choice(len(defender.board), num_to_destroy, replace=False).tolist(), reverse=True)
                     for idx in indices_to_destroy:
                         destroyed = defender.board.pop(idx)
                         defender.history.append(destroyed)

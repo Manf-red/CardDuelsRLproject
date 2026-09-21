@@ -52,6 +52,7 @@ class Deck:
         """
         self.cards = [self.card_pool[card_id] for card_id in self.card_in_deck_ids]
         self.rng.shuffle(self.cards)
+        #self.cards.sort(key=lambda card: card.id)
 
     def draw(self) -> Card | None:
         """

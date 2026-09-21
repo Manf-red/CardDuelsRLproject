@@ -79,12 +79,17 @@ def evaluate_agent(
     return mean_return, std_return, win_rate
 
 
-def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent: HeuristicOpponent, episodes: int, *, max_steps: int = 200, train_freq: int = 4, log_every: int = 100, seed: int | None = 0, save_dir: str = "./checkpoints/heuristic/") -> TrainingHistory:
+def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent: HeuristicOpponent, episodes: int, *, max_steps: int = 200, train_freq: int = 4, log_every: int = 100, eval_n_episodes: int = 100, seed: int | None = 0, save_dir: str = "./checkpoints/heuristic/") -> TrainingHistory:
     """
     Executes the main Reinforcement Learning loop.
     """
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     os.makedirs(save_dir, exist_ok=True)
+
+    if seed is not None:
+        import torch
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     
     history = TrainingHistory()
     win_counts = {-1: 0, 0: 0, 1: 0} # -1: Draw, 0: Player 0, 1: Player 1
@@ -156,7 +161,7 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
             # Evaluate the deterministic target policy
             cached_temp = heuristic_agent.temperature
             heuristic_agent.temperature = 0.01
-            mean_ret, std_ret, eval_win_rate = evaluate_agent(agent, env, heuristic_agent, n_episodes=20, seed=seed)
+            mean_ret, std_ret, eval_win_rate = evaluate_agent(agent, env, heuristic_agent, n_episodes=eval_n_episodes, seed=seed)
             heuristic_agent.temperature = cached_temp
             
             # Store Evaluation Metrics
@@ -188,12 +193,17 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
     return history
 
 
-def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_agent: HeuristicOpponent, episodes: int, *, max_steps: int = 200, train_freq: int = 4, log_every: int = 100, seed: int | None = 0, save_dir: str = "./checkpoints/selfplay/") -> TrainingHistory:
+def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_agent: HeuristicOpponent, episodes: int, *, max_steps: int = 200, train_freq: int = 4, log_every: int = 100, eval_n_episodes: int = 100, seed: int | None = 0, save_dir: str = "./checkpoints/selfplay/") -> TrainingHistory:
     """
     Executes the main Reinforcement Learning loop using Shared-Weight Self-Play.
     """
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     os.makedirs(save_dir, exist_ok=True)
+
+    if seed is not None:
+        import torch
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     
     # Tracking metrics
     history = TrainingHistory()
@@ -275,7 +285,7 @@ def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_age
             # Evaluate against the STATIC Heuristic, not itself
             cached_temp = evaluation_benchmark_agent.temperature
             evaluation_benchmark_agent.temperature = 0.01
-            mean_ret, std_ret, eval_win_rate = evaluate_agent(agent, env, evaluation_benchmark_agent, n_episodes=20, seed=seed)
+            mean_ret, std_ret, eval_win_rate = evaluate_agent(agent, env, evaluation_benchmark_agent, n_episodes=eval_n_episodes, seed=seed)
             evaluation_benchmark_agent.temperature = cached_temp
             
             history.eval_episodes.append(episode)

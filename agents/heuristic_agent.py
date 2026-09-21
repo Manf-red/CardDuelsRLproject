@@ -5,51 +5,33 @@ class HeuristicOpponent:
     """
     State-Conditioned Utility Agent with Temperature scaling.
     """
-    def __init__(self, max_hp: int = 30, max_hand: int = 5, max_board: int = 7, temperature: float = 1.0):
+    def __init__(self, max_hp: int = 40, max_hand: int = 5, max_board: int = 7, temperature: float = 1.0, seed: int | None = None):
         self.max_hand = max_hand
         self.max_board = max_board
         self.max_hp = max_hp
         self.n_actions = 2 ** max_hand
+        self.initial_temperature = temperature
         self.temperature = temperature
 
-    def _evaluate_card(self, card_vector: np.ndarray, obs: dict[str, np.ndarray], available_slots: int) -> float:
-        # Card: [Cost, ATK, DEF, m_draw, m_burn, m_heal, m_wipe]
-        atk = card_vector[1] * 10.0
-        defe = card_vector[2] * 12.0
-        m_draw = round(card_vector[3] * 3.0)
-        m_burn = card_vector[4] * 14.0
-        m_heal = card_vector[5] * 10.0
-        m_wipe = round(card_vector[6] * 7.0)
+        self.rng = np.random.default_rng(seed)
+
+    def _evaluate_card_base(self, card_vector: np.ndarray, obs: dict[str, np.ndarray], available_slots: int) -> float:
+        """Evaluates non-terminal board control, draw, and wipe mechanics."""
+        atk = card_vector[1] * 10.0 # Unnormalize
+        defe = card_vector[2] * 12.0 # unnormalize
+        m_draw = round(card_vector[3] * 3.0) # Unnormalize
+        m_wipe = round(card_vector[6] * 7.0) # Unnormalize
         
-        opp_hp = obs["opp_stats"][0] * 30.0
-        self_hp = obs["self_stats"][0] * 30.0
-        self_deck_size = obs["self_stats"][3] * 20.0
-        opp_board_raw = obs["opp_board"] * np.array([10., 10., 12., 3., 14., 10., 7.], dtype=np.float32)
+        self_deck_size = obs.get("self_stats", np.zeros(4, dtype=np.float32))[3] * 20.0
+        opp_board_raw = obs.get("opp_board", np.zeros((self.max_board, 7), dtype=np.float32)) * np.array([10., 10., 12., 3., 14., 10., 7.], dtype=np.float32)
+        
+        utility = 0.0
         
         # Board Space Constraints
         if defe > 0 and available_slots <= 0:
-            # The unit goes straight to the graveyard. We severely penalize wasting the stats.
-            utility = -(atk * 1.5 + defe)
+            utility -= (atk * 1.5 + defe)
         else:
-            utility = (atk * 1.5) + defe
-        
-        # Burn & Self-Burn Logic
-        if m_burn > 0:
-            if m_burn >= opp_hp:
-                return 9999.0  # Instant lethal
-            utility += m_burn * 10
-        elif m_burn < 0:
-            utility += m_burn * 10  # Penalize self-inflicted damage
-            
-        # Heal & Self-Damage Logic
-        if m_heal > 0:
-            deficit = 30.0 - self_hp # Assuming Max HP is 30
-            actual_heal = min(m_heal, deficit)
-            utility += actual_heal * 5
-        elif m_heal < 0:
-            utility += m_heal * 10  # Penalize self-inflicted damage
-            if self_hp + m_heal <= 0:
-                return -9999.0  # Prevent accidental suicide
+            utility += (atk * 1.5) + defe
             
         # Draw Logic (Fatigue Protection)
         if m_draw > 0:
@@ -75,10 +57,15 @@ class HeuristicOpponent:
             return 0
             
         utilities = np.zeros(len(valid_actions), dtype=np.float32)
-        hand_matrix = obs["self_hand"]
+        hand_matrix = obs.get("self_hand", np.zeros((self.max_hand, 7), dtype=np.float32))
+        
+        # Un-normalize using the correct self.max_hp dynamic parameter
+        opp_hp_base = obs.get("opp_stats", np.zeros(3, dtype=np.float32))[0] * self.max_hp
+        self_hp_base = obs.get("self_stats", np.zeros(4, dtype=np.float32))[0] * self.max_hp
         
         # Calculate available board slots dynamically
-        current_board_size = np.sum(obs["self_board"][:, 2] > 0)
+        self_board = obs.get("self_board", np.zeros((self.max_board, 7), dtype=np.float32))
+        current_board_size = np.sum(self_board[:, 2] > 0)
         base_available_slots = self.max_board - current_board_size
         
         for idx, action_idx in enumerate(valid_actions):
@@ -86,34 +73,75 @@ class HeuristicOpponent:
             action_utility = 0.0
             slots_used = 0
             
+            # Track aggregate HP changes to detect multi-card combos
+            sim_opp_hp = opp_hp_base
+            sim_self_hp = self_hp_base
+            
             for bit_idx, bitStr in enumerate(binary_string):
                 if bitStr == '1':
                     card_vec = hand_matrix[bit_idx]
-                    
-                    # Project remaining slots to avoid evaluating multi-unit plays on a nearly full board
                     slots_remaining = base_available_slots - slots_used
-                    action_utility += self._evaluate_card(card_vec, obs, slots_remaining)
                     
-                    if card_vec[2] > 0:  # If DEF > 0, it occupies a board slot
+                    # Add base utility (Board presence, Draw, Wipe)
+                    action_utility += self._evaluate_card_base(card_vec, obs, slots_remaining)
+                    
+                    # Accumulate HP impacts
+                    m_burn = card_vec[4] * 14.0
+                    m_heal = card_vec[5] * 10.0
+                    
+                    sim_opp_hp -= m_burn
+                    sim_self_hp += m_heal
+                    
+                    # Award standard utility for damage/healing
+                    action_utility += m_burn * 10
+                    if m_heal > 0:
+                        action_utility += m_heal * 5
+                    elif m_heal < 0:
+                        action_utility += m_heal * 10
+                    
+                    if card_vec[2] > 0:  
                         slots_used += 1
-                        
+
+            # --- Evaluate Aggregate Combo States ---
+            
+            # 1. Combo Lethal Check
+            if sim_opp_hp <= 0 and opp_hp_base > 0:
+                action_utility += 9999.0
+                
+            # 2. Combo Suicide Check
+            if sim_self_hp <= 0 and self_hp_base > 0:
+                action_utility -= 9999.0
+                
+            # 3. Overheal Correction (Removes utility awarded for healing past Max HP)
+            if sim_self_hp > self.max_hp:
+                excess_heal = sim_self_hp - self.max_hp
+                action_utility -= (excess_heal * 5)
+
             utilities[idx] = action_utility
 
         if self.temperature <= 0.01:
             best_idx = np.argmax(utilities)
             return int(valid_actions[best_idx])
             
-        # Restored Softmax Normalization Block
         scaled_u = utilities / self.temperature
         scaled_u -= np.max(scaled_u)
         exp_u = np.exp(scaled_u)
         probs = exp_u / np.sum(exp_u)
         
-        chosen_idx = np.random.choice(len(valid_actions), p=probs)
+        chosen_idx = self.rng.choice(len(valid_actions), p=probs)
         return int(valid_actions[chosen_idx])
 
     def end_episode(self, ending_rate: float) -> None:
         """
-        Gradually reduce randomness as training progresses.
+        Hyperbolic decay: Fast initial randomness drop to quickly provide a stationary benchmark.
+        ending_rate: Normalized training progress from 0.0 to 1.0
         """
-        self.temperature = max(0.01, 2.0 * (1.0 - ending_rate))  # Curriculum Learning: Gradually reduce randomness as training progresses
+        if self.initial_temperature <= 0.01:
+            return
+
+        t_min = 0.01
+        
+        # Dynamically calculate alpha using the actual initialization temperature
+        alpha = (self.initial_temperature / t_min) - 1.0
+        
+        self.temperature = max(t_min, self.initial_temperature / (1.0 + alpha * ending_rate))

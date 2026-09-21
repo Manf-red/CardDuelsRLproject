@@ -70,7 +70,7 @@ class CardDuelsEnv(gym.Env):
             p1.draw_card()
             p2.draw_card()
 
-        self.board = GameState(p1, p2)
+        self.board = GameState(p1, p2, self.np_random)
         self.board.start_turn()
 
         return self._get_obs(), self._get_info()

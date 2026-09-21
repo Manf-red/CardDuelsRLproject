@@ -118,7 +118,7 @@ class MultiModalQNetwork(nn.Module):
     Action-value approximator.
     Dynamically builds parallel feature extractors based on the observation space.
     """
-    def __init__(self, observation_space: spaces.Dict, n_actions: int, card_extractor_cls: type[nn.Module] = MLPCardExtractor, card_extractor_out_dim: int = 64):
+    def __init__(self, observation_space: spaces.Dict, n_actions: int, card_extractor_out_dim: int = 64):
         super().__init__()
 
         self.extractors = nn.ModuleDict()
@@ -143,18 +143,12 @@ class MultiModalQNetwork(nn.Module):
                 # 2D matrices (Cards)
                 max_cards = subspace.shape[0]
                 card_dim = subspace.shape[1]
-                # Dynamically instantiate the passed extractor class
-                if key in ["self_hand", "opp_hand"]:
-                    # Preserve positional mapping for hands
-                    self.extractors[key] = AttentionFlattenCardExtractor(
-                        card_dim=card_dim, max_cards=max_cards, out_dim=card_extractor_out_dim
-                    )
-                else:
-                    # Apply permutation invariance to unordered sets (board, deck, history)
-                    self.extractors[key] = card_extractor_cls(
-                        card_dim=card_dim, out_dim=card_extractor_out_dim
-                    )
-                
+                flattened_dim = max_cards * card_dim
+                self.extractors[key] = nn.Sequential(
+                    nn.Flatten(),
+                    nn.Linear(flattened_dim, card_extractor_out_dim),
+                    nn.ReLU()
+                )
                 total_concat_size += card_extractor_out_dim
         
         self.q_value_head = nn.Sequential(
