@@ -120,28 +120,31 @@ def plot_ablation_study(histories_dict: dict[str, Any], save_path: str = "./plot
 
     for idx, (label, history) in enumerate(histories_dict.items()):
         color = colors[idx]
-        eval_eps = history.eval_episodes
+
+        train_eps = np.array(history.train_episodes)
+        train_rets = np.array(history.train_episodes_returns) 
         
+        eval_eps = np.array(history.eval_episodes)
+        eval_rets = np.array(history.eval_mean_returns)
+        eval_wins = np.array(history.eval_p0_win_rates)
+
         # --- PLOT 1: Expected Return (Policy Quality & Stability) ---
-        mean_rets = np.array(history.eval_mean_returns)
-        #std_rets = np.array(history.eval_std_returns)
-        
-        # Calculate moving average for smoother visual trends
-        window = max(1, len(mean_rets) // 10)
-        ma_rets = np.convolve(mean_rets, np.ones(window)/window, mode='valid')
-        ma_eps = eval_eps[window-1:]
-        
-        ax1.plot(ma_eps, ma_rets, label=label, color=color, linewidth=2.5)
-        # Optional: Add variance shading for the raw data
-        # ax1.fill_between(eval_eps, mean_rets - std_rets, mean_rets + std_rets, color=color, alpha=0.1)
+
+        window = max(1, len(train_rets) // 20) 
+        if len(train_rets) >= window:
+            ma_train_rets = np.convolve(train_rets, np.ones(window)/window, mode='valid')
+            ma_train_eps = train_eps[window-1:]
+
+            ax1.plot(ma_train_eps, ma_train_rets, color=color, alpha=0.3, linewidth=1.5, zorder=1)
+
+        ax1.plot(eval_eps, eval_rets, label=label, color=color, linewidth=2.5, marker='o', markersize=4, zorder=2)
 
         # --- PLOT 2: Absolute Win Rate vs Heuristic ---
-        win_rates = np.array(history.eval_p0_win_rates)
-        ma_wins = np.convolve(win_rates, np.ones(window)/window, mode='valid')
-        ax2.plot(ma_eps, ma_wins, label=label, color=color, linewidth=2.5)
+        ax2.plot(eval_eps, eval_wins, label=label, color=color, linewidth=2.5, marker='o', markersize=4)
+
 
     # Format Expected Return Plot
-    ax1.set_title(r"Target Policy: Moving Average Expected Return", weight='bold')
+    ax1.set_title(r"Target Policy vs Exploratory Return", weight='bold')
     ax1.set_xlabel("Training Episode")
     ax1.set_ylabel("Cumulative Reward")
     ax1.legend(loc="lower right")

@@ -20,11 +20,13 @@ class TrainingHistory:
     grad_norms: list[float] = field(default_factory=list)
     weight_norms: list[float] = field(default_factory=list)
     
-    # Granular Training Diagnostics
+    # Training Diagnostics
     train_episode_lengths: list[int] = field(default_factory=list)
     train_terminal_deck_sizes: list[int] = field(default_factory=list)
+    train_episodes_returns: list[float] = field(default_factory=list)
+    train_episodes: list[int] = field(default_factory=list)
     
-    # Formal Evaluation Metrics (Target Policy)
+    # Evaluation Metrics (Target Policy)
     eval_episodes: list[int] = field(default_factory=list)
     eval_p0_win_rates: list[float] = field(default_factory=list)
     eval_mean_returns: list[float] = field(default_factory=list)
@@ -61,8 +63,8 @@ def evaluate_agent(
             obs, info = next_obs, next_info
 
             # Accumulate reward only for the DQN
-            if current_player == 0:
-                ep_return += reward
+            p0_step_reward = reward if current_player == 0 else -reward
+            ep_return += p0_step_reward
 
             if terminated or truncated:
                 # In env.step, reward is 1.0 if the CURRENT player wins.
@@ -99,6 +101,8 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
     for episode in range(1, episodes + 1):
         obs, info = env.reset(seed=seed if episode == 1 else None)
         pending_transitions: dict[int, tuple[dict[str, np.ndarray], int]] = {}
+
+        p0_ep_return = 0.0
         
         for step in range(max_steps):
             global_step += 1
@@ -122,6 +126,8 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
 
             if step == max_steps - 1:
                 truncated = True
+
+            p0_ep_return += reward if current_player == 0 else -reward
 
             if terminated or truncated:
                 bellman_done = bool(terminated)
@@ -153,6 +159,9 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
 
             if terminated or truncated:
                 break
+
+        history.train_episodes.append(episode)
+        history.train_episodes_returns.append(p0_ep_return)
 
         agent.end_episode()
         heuristic_agent.end_episode(episode / episodes)  # Gradually reduce randomness in the heuristic opponent
@@ -215,6 +224,8 @@ def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_age
         obs, info = env.reset(seed=seed if episode == 1 else None)
         # Temporal buffer to correctly align the MDP transitions for alternating turns: {player_index: (state, action)}
         pending_transitions: dict[int, tuple[dict[str, np.ndarray], int]] = {}
+
+        p0_ep_return = 0.0
         
         for step in range(max_steps):
             global_step += 1
@@ -236,6 +247,8 @@ def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_age
             next_mask = next_info["action_mask"]
             if step == max_steps - 1:
                 truncated = True
+
+            p0_ep_return += reward if current_player == 0 else -reward
 
             # Replay Buffer Storage & Reward Attribution
             if terminated or truncated:
@@ -278,6 +291,9 @@ def train_self_play(agent: DQNAgent, env: CardDuelsEnv, evaluation_benchmark_age
 
             if terminated or truncated:
                 break
+
+        history.train_episodes.append(episode)
+        history.train_episodes_returns.append(p0_ep_return)
         
         agent.end_episode()
 
