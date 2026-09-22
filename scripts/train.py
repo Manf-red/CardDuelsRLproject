@@ -57,7 +57,7 @@ def evaluate_agent(
             if current_player == 0:
                 action = agent.select_action(obs, action_mask, is_greedy=True)
             else:
-                action = heuristic_agent.select_action(obs, action_mask)
+                action = heuristic_agent.select_action(info["full_state"], action_mask)
 
             next_obs, reward, terminated, truncated, next_info = env.step(action)
             obs, info = next_obs, next_info
@@ -116,7 +116,7 @@ def train_against_heuristic(agent: DQNAgent, env: CardDuelsEnv, heuristic_agent:
             if current_player == 0:
                 action = agent.select_action(obs, action_mask)
             else:
-                action = heuristic_agent.select_action(obs, action_mask)
+                action = heuristic_agent.select_action(info["full_state"], action_mask)
 
             # Store the current state and action for the next self turn. We cannot store the reward or next_state until this player's NEXT turn (or until the game ends).
             pending_transitions[current_player] = (obs, action)

@@ -1,5 +1,4 @@
 import copy
-import random
 from collections import deque, namedtuple
 
 import numpy as np
@@ -18,7 +17,7 @@ class ReplayBuffer:
     """
     def __init__(self, capacity: int,  *, seed: int | None = None):
         self._buffer = deque(maxlen=capacity)
-        self._rng = random.Random(seed)
+        self._rng = np.random.default_rng(seed=seed)
 
     def push(self, state: dict[str, np.ndarray], action: int, reward: float, next_state: dict[str, np.ndarray], done: bool, next_action_mask: np.ndarray):
         """
@@ -40,7 +39,8 @@ class ReplayBuffer:
         """
         Draw a uniform random minibatch, returned as batched tensors.
         """
-        batch = self._rng.sample(self._buffer, batch_size)
+        indices = self._rng.choice(len(self._buffer), size=batch_size, replace=False)
+        batch = [self._buffer[i] for i in indices]
         
         states = {}
         next_states = {}

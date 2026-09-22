@@ -15,7 +15,7 @@ class CardDuelsEnv(gym.Env):
     metadata: ClassVar[dict[str, list[str]]] = {"render_modes": ["human"]}
     np_random: np.random.Generator
 
-    def __init__(self, card_pool: dict[str, Card], deck_list_p1: list[str], deck_list_p2: list[str], max_hand: int = 5, max_board: int = 7, max_hp: int = 30, mana_limit: int = 10, total_unique_cards: int = 40, obs_features: list[str] | None = None) -> None:
+    def __init__(self, card_pool: dict[str, Card], deck_list_p1: list[str], deck_list_p2: list[str], max_hand: int = 5, max_board: int = 7, max_hp: int = 30, mana_limit: int = 10, total_unique_cards: int = 40) -> None:
         super().__init__()
         self.card_pool = card_pool
         self.deck_list_p1 = deck_list_p1
@@ -30,7 +30,7 @@ class CardDuelsEnv(gym.Env):
 
         self.action_space = spaces.Discrete(2 ** self.max_hand)
 
-        master_space = {
+        self.observation_space = spaces.Dict({
             "self_stats": spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32),
             "opp_stats": spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32),
             "self_hand": spaces.Box(low=-1.0, high=1.0, shape=(self.max_hand, self.card_dim), dtype=np.float32),
@@ -40,16 +40,7 @@ class CardDuelsEnv(gym.Env):
             "history_opp": spaces.Box(low=-1.0, high=1.0, shape=(self.max_deck, self.card_dim), dtype=np.float32),
             "history_self": spaces.Box(low=-1.0, high=1.0, shape=(self.max_deck, self.card_dim), dtype=np.float32),
             "deck_stats_self": spaces.Box(low=-1.0, high=1.0, shape=(self.max_deck, self.card_dim), dtype=np.float32)
-        }
-
-        if obs_features is None:
-            self.obs_features = list(master_space.keys())
-        else:
-            self.obs_features = obs_features
-
-        # Filter the spaces.Dict to match the requested features
-        active_spaces = {k: v for k, v in master_space.items() if k in self.obs_features}
-        self.observation_space = spaces.Dict(active_spaces)
+        })
 
         self.board: GameState | None = None
 
@@ -116,33 +107,25 @@ class CardDuelsEnv(gym.Env):
         p_opp.board.sort(key=lambda c: (c.defe, c.atk, c.cost, c.id), reverse=True)
         p_opp.hand.sort(key=lambda c: (c.cost, c.atk, c.defe, c.id))
 
-        safe_obs_deck = sorted(p_self.deck.cards, key=lambda c: c.id)
+        #safe_obs_deck = sorted(p_self.deck.cards, key=lambda c: c.id)
+        safe_obs_deck = p_self.deck.cards
 
         # Normalizations
         CARD_MAX = np.array([10.0, 10.0, 12.0, 3.0, 14.0, 10.0, 7.0], dtype=np.float32) # Cards: [Cost (10), ATK (10), DEF (12), Draw (3), Burn (14), Heal (10), Wipe (7)]
         STATS_MAX_SELF = np.array([self.max_hp, self.mana_limit, self.mana_limit, self.max_deck], dtype=np.float32)
         STATS_MAX_OPP = np.array([self.max_hp, self.max_hand, self.max_deck], dtype=np.float32)
 
-        obs = {}
-
-        if "self_stats" in self.obs_features:
-            obs["self_stats"] = np.array([p_self.hp, p_self.mana, p_self.max_mana, len(p_self.deck.cards)], dtype=np.float32) / STATS_MAX_SELF
-        if "opp_stats" in self.obs_features:
-            obs["opp_stats"] = np.array([p_opp.hp, len(p_opp.hand), len(p_opp.deck.cards)], dtype=np.float32) / STATS_MAX_OPP
-        if "self_hand" in self.obs_features:
-            obs["self_hand"] = build_card_matrix(p_self.hand, p_self.max_hand, self.card_dim) / CARD_MAX
-        if "self_board" in self.obs_features:
-            obs["self_board"] = build_card_matrix(p_self.board, p_self.max_board, self.card_dim) / CARD_MAX
-        if "opp_hand" in self.obs_features:
-            obs["opp_hand"] = build_card_matrix(p_opp.hand, p_opp.max_hand, self.card_dim) / CARD_MAX
-        if "opp_board" in self.obs_features:
-            obs["opp_board"] = build_card_matrix(p_opp.board, p_opp.max_board, self.card_dim) / CARD_MAX
-        if "history_opp" in self.obs_features:
-            obs["history_opp"] = build_card_matrix(p_opp.history, self.max_deck, self.card_dim) / CARD_MAX
-        if "history_self" in self.obs_features:
-            obs["history_self"] = build_card_matrix(p_self.history, self.max_deck, self.card_dim) / CARD_MAX
-        if "deck_stats_self" in self.obs_features:
-            obs["deck_stats_self"] = build_card_matrix(safe_obs_deck, self.max_deck, self.card_dim) / CARD_MAX
+        obs = {
+            "self_stats": np.array([p_self.hp, p_self.mana, p_self.max_mana, len(p_self.deck.cards)], dtype=np.float32) / STATS_MAX_SELF,
+            "opp_stats": np.array([p_opp.hp, len(p_opp.hand), len(p_opp.deck.cards)], dtype=np.float32) / STATS_MAX_OPP,
+            "self_hand": build_card_matrix(p_self.hand, p_self.max_hand, self.card_dim) / CARD_MAX,
+            "self_board": build_card_matrix(p_self.board, p_self.max_board, self.card_dim) / CARD_MAX,
+            "opp_hand": build_card_matrix(p_opp.hand, p_opp.max_hand, self.card_dim) / CARD_MAX,
+            "opp_board": build_card_matrix(p_opp.board, p_opp.max_board, self.card_dim) / CARD_MAX,
+            "history_opp": build_card_matrix(p_opp.history, self.max_deck, self.card_dim) / CARD_MAX,
+            "history_self": build_card_matrix(p_self.history, self.max_deck, self.card_dim) / CARD_MAX,
+            "deck_stats_self": build_card_matrix(safe_obs_deck, self.max_deck, self.card_dim) / CARD_MAX
+        }
 
         return obs
 
