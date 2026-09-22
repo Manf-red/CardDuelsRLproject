@@ -11,7 +11,6 @@ class ObservationWrapper(gym.ObservationWrapper):
         super().__init__(env)
         self.obs_features = obs_features
         
-        # Proiezione dimensionale: ridefiniamo lo spazio degli stati filtrato
         active_spaces = {
             k: v for k, v in env.observation_space.spaces.items() 
             if k in obs_features
